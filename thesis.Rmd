@@ -1,0 +1,65 @@
+---
+title: "Efficiency Metrics of Random Number Generators: A Comparative Study on Pseudo, Quasi, and True Random Monte Carlo Simulations^[Preliminary draft. Please do not cite or circulate without permission from the author.]"
+author: "Marcus Stolz^[Department of Statistics, Lund University. Email: marcus.stolz@stat.lu.se.]&nbsp; & Jonathan Ramani Christopher^[Department of Statistics, Lund University. Email: jonathan.ramani@outlook.com.]" 
+date: "`r format(Sys.Date(), '%d %B %Y')`"                               
+output: pdf_document                                    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+\begin{center}
+\textbf{\large Abstract}
+\end{center}
+
+\begin{center}
+This is the abstract of your paper.
+\end{center}
+
+\newpage 
+
+## Introduction
+
+Your introduction goes here.
+
+\newpage 
+
+## Literature Review
+
+A brief literature review.
+
+\newpage 
+
+## Data and Methodology
+
+Explain your data and methodology.
+
+\newpage 
+
+## Results
+
+Present your results.
+
+\newpage 
+
+## Conclusion
+
+Summarize your findings and conclude the paper.
+
+\newpage 
+
+# References
+
+Smith, J. (2005). The Art of Programming. ABC Publishing.
+
+\ 
+
+Smith, J. (2005). The Art of Programming. ABC Publishing. pp. 45-67.
+
+
+
+
+
+
