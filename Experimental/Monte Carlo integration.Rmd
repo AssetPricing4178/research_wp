@@ -1,0 +1,86 @@
+---
+title: "Monte Carlo integration"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-09-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(qrng)
+library(random)
+```
+
+Vi testar integrera Nf(0,1) mellan -100,100 svaret bör vara runt ish 1. Vi gör det med monte carlo integration och vi jämför konvergenstiden mellan Pseudo-random variabler(det vanliga) och quasi-random(mer deterministiskt)
+
+```{r}
+#monte carlo integration of f(x) = x^2 for the limits a=0, b=10
+n <- 10000
+a <- -100 
+b <- 100
+
+f <- function(x){
+  #return(x^2)
+  return(1/sqrt(2*pi)*exp(-0.5*(x)^2)) #normalfördelningen
+}
+
+#Pseudo random vanliga
+uPseudo <- runif(n,min = a,max = b) # OSU urval, kan testa olika
+uPseudoSequential <-c()
+estimatePseudo <- c()
+
+#TrueRandom
+
+
+#Quasi random
+uSobol <- a + (b - a) * sobol(n)
+uSobolSequential <-c()
+estimateSobol <- c()
+
+uKorobov <- a + (b - a) * korobov(n,generator =2)
+uKorobovSequential <-c()
+estimateKorobov <- c()
+
+uGhalton <- a + (b - a) * ghalton(n)
+uGhaltonSequential <-c()
+estimateGhalton <- c()
+
+
+
+
+for (i in 1:n) {
+  uPseudoSequential <- append(uPseudoSequential, uPseudo[i])
+  uSobolSequential <- append(uSobolSequential, uSobol[i])
+  uKorobovSequential <- append(uKorobovSequential, uKorobov[i])
+  uGhaltonSequential <- append(uGhaltonSequential, uGhalton[i])
+
+  resultPseudo <- (b - a) * mean(f(uPseudoSequential))
+  resultSobol <- (b - a) * mean(f(uSobolSequential))
+  resultKorobov <- (b - a) * mean(f(uKorobovSequential))
+  resultGhalton <- (b - a) * mean(f(uGhaltonSequential))
+
+  estimatePseudo <- append(estimatePseudo, resultPseudo)
+  estimateSobol <- append(estimateSobol, resultSobol)
+  estimateKorobov <- append(estimateKorobov, resultKorobov)
+  estimateGhalton <- append(estimateGhalton, resultGhalton)
+  
+}
+
+
+x <- seq(1,n)
+plot(x,estimatePseudo, cex = 0.2, pch = 20, ylim = c(0.99,1.2), xlab = "n")
+points(estimateSobol, col ="red", cex = 0.2, pch = 20)
+#points(estimateKorobov, col ="blue", cex = 0.2, pch = 20)
+points(estimateGhalton, col ="yellow", cex = 0.2, pch = 20)
+abline(h=1)
+
+#plot(x,estimatePseudo, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Pseudo,vanliga")
+#abline(h=1)
+#plot(x,estimateSobol, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Quasi,Sobol")
+#abline(h=1)
+#plot(x,estimateKorobov, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Quasi,Koroborov???")
+#abline(h=1)
+#plot(x,estimateGhalton, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Quasi,Halton")
+#abline(h=1)
+```
