@@ -1,0 +1,25 @@
+```{r}
+library(qrng)
+library(random)
+
+n <- 1000
+pseudoSeq1 <- runif(n,0,10)
+quasiSeq1 <- sobol(n) *10
+#trueRandom1 <- randomNumbers(n, 0,10*1000, col = 1)/1000
+
+
+plot(quasiSeq1, cex = 0.5, col = "black", pch = 16, main = "Quasi random numbers", ylab = "generated numbers, 0:10")
+plot(pseudoSeq1, cex = 0.5, col = "blue", pch = 16, main = "Pseudo random numbers", ylab = "generated numbers, 0:10")
+plot(trueRandom1, cex = 0.5, col = "red", pch = 16, main = "True random numbers", ylab = "generated numbers, 0:10")
+
+#4. plot
+plot(trueRandom1, cex = 0.1, col = "red", pch = 16 )
+points(pseudoSeq1, cex = 0.1, col = "blue", pch = 16)
+points(quasiSeq1, cex = 0.5, col = "black", pch = 15)
+
+
+```
+
+
+
+

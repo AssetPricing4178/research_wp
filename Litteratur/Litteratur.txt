@@ -1,0 +1,10 @@
+References
+Radovic, I., Sobol’, I. M. and Tichy, R. F. (1996). Quasi-Monte Carlo methods for numerical
+integration: Comparison of different low discrepancy sequences. Monte Carlo Methods and Appli-
+cations 2(1), 1–14.
+Faure, H., Lemieux, C. (2009). Generalized Halton Sequences in 2008: A Comparative Study.
+ACM-TOMACS 19(4), Article 15.
+Owen, A. B. (2003). The dimension distribution and quadrature test functions. Stat. Sinica 13,
+1-–17.
+Sobol’, I. M. and Asotsky, D. I. (2003). One more experiment on estimating high-dimensional
+integrals by quasi-Monte Carlo methods. Math. Comput. Simul. 62, 255—263.

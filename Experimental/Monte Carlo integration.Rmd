@@ -15,7 +15,7 @@ library(random)
 Vi testar integrera Nf(0,1) mellan -100,100 svaret bör vara runt ish 1. Vi gör det med monte carlo integration och vi jämför konvergenstiden mellan Pseudo-random variabler(det vanliga) och quasi-random(mer deterministiskt)
 
 ```{r}
-#monte carlo integration of f(x) = x^2 for the limits a=0, b=10
+set.seed(1)
 n <- 10000
 a <- -100 
 b <- 100
@@ -31,56 +31,74 @@ uPseudoSequential <-c()
 estimatePseudo <- c()
 
 #TrueRandom
-
+#uTrue <-  a + (b-a) * randomNumbers(n = n, min = a*1000*(1/3), max = b*1000, col = 1)/100000
+#uTrue[uTrue < 0 ]<- uTrue[uTrue < 0 ]* (1/3)
+#uTrueSequential <- c()
+#estimateTrue <- c()
 
 #Quasi random
 uSobol <- a + (b - a) * sobol(n)
 uSobolSequential <-c()
 estimateSobol <- c()
 
-uKorobov <- a + (b - a) * korobov(n,generator =2)
-uKorobovSequential <-c()
-estimateKorobov <- c()
-
-uGhalton <- a + (b - a) * ghalton(n)
-uGhaltonSequential <-c()
-estimateGhalton <- c()
-
-
-
 
 for (i in 1:n) {
   uPseudoSequential <- append(uPseudoSequential, uPseudo[i])
   uSobolSequential <- append(uSobolSequential, uSobol[i])
-  uKorobovSequential <- append(uKorobovSequential, uKorobov[i])
-  uGhaltonSequential <- append(uGhaltonSequential, uGhalton[i])
+  
+  #uTrue <- append(uTrueSequential, uTrue[i])
 
   resultPseudo <- (b - a) * mean(f(uPseudoSequential))
   resultSobol <- (b - a) * mean(f(uSobolSequential))
-  resultKorobov <- (b - a) * mean(f(uKorobovSequential))
-  resultGhalton <- (b - a) * mean(f(uGhaltonSequential))
+ 
+  #valid_uTrueSequential <- uTrueSequential[!is.na(uTrueSequential)]
+  #resultTrue <- (b - a) * mean(f(valid_uTrueSequential))
+
 
   estimatePseudo <- append(estimatePseudo, resultPseudo)
   estimateSobol <- append(estimateSobol, resultSobol)
-  estimateKorobov <- append(estimateKorobov, resultKorobov)
-  estimateGhalton <- append(estimateGhalton, resultGhalton)
+  
+  #estimateTrue <- append(estimateTrue, resultTrue)
   
 }
 
 
 x <- seq(1,n)
-plot(x,estimatePseudo, cex = 0.2, pch = 20, ylim = c(0.99,1.2), xlab = "n")
+plot(x,estimatePseudo, cex = 0.2, pch = 20, ylim = c(0.9,1.2), xlab = "n", ylab ="estimat", main = "Monte Carlo Integration av NF")
 points(estimateSobol, col ="red", cex = 0.2, pch = 20)
-#points(estimateKorobov, col ="blue", cex = 0.2, pch = 20)
-points(estimateGhalton, col ="yellow", cex = 0.2, pch = 20)
+#plot(x,estimateTrue, col ="blue", cex = 0.2, pch = 20,ylim = c(0.99,1.2),)
 abline(h=1)
+# Adding a legend
+legend("topright", legend = c("Pseudo Random", "Quasi Random"), col = c("black", "red"), pch = 20, cex = 0.8)
+cat("Pseudo-skattning:", resultPseudo, "\n")
+cat("Quasi-skattning:", resultSobol, "\n")
 
-#plot(x,estimatePseudo, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Pseudo,vanliga")
-#abline(h=1)
-#plot(x,estimateSobol, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Quasi,Sobol")
-#abline(h=1)
-#plot(x,estimateKorobov, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Quasi,Koroborov???")
-#abline(h=1)
-#plot(x,estimateGhalton, ylim = c(0.99,1.2),cex = 0.2, pch = 20, main ="Quasi,Halton")
-#abline(h=1)
+```
+
+
+```{r}
+library(qrng)
+set.seed(1)
+
+n <- 10000
+a <- -100 
+b <- 100
+
+f <- function(x){
+  return(1/sqrt(2*pi)*exp(-0.5*(x)^2)) #normalfördelningen
+}
+
+#Pseudo 
+uPseudo <- runif(n,min = a,max = b)
+
+#Quasi 
+uQuasi <-  a + (b - a) * sobol(n)
+
+
+#skattningar
+skattningPseudo <- (b-a) * mean(f(uPseudo))
+skattningQuasi  <- (b-a) * mean(f(uQuasi))
+
+cat("Pseudo-skattning:", skattningPseudo, "\n")
+cat("Quasi-skattning:", skattningQuasi, "\n")
 ```
