@@ -1,0 +1,161 @@
+# Funktion för 2dimensionell MC-integration
+
+```{r}
+mcInt2Dim <- function(nvalues, fxy, ax, ay, bx, by, RNG = c("Quasi", "Pseudo")){
+  if (RNG == "Quasi"){
+  x <- ax + (bx - ax) * sobol(nvalues, init = 123)
+  y <- ay + (by - ay) * sobol(nvalues, init = 321)
+  
+  
+  print((bx-ax)*(by-ay))
+  mean <- mean(fxy(x,y))
+  estimate <-(bx-ax)*(by-ay)*mean
+  return(estimate)
+  }
+  
+  else if(RNG == "Pseudo"){
+    x <- runif(nvalues, ax, bx)
+    y <- runif(nvalues, ay, by)
+    print(sum(fxy(x,y)))
+    mean <- mean(fxy(x,y))
+    estimate <-(bx-ax)*(by-ay)*mean
+    return(estimate)
+  }
+}
+```
+
+# Exempel 
+
+## Tvådimensionella funktioner
+
+```{r}
+
+
+fxy1 <- function(x,y){
+  return(exp(x+y))
+}
+
+fxy2 <- function(x,y){
+  return(x*y)
+}
+
+bivNF <- function(x, y, mu_x = 0, mu_y = 0, sigma_x = 1, sigma_y = 1){
+  
+  term1 <- 1 / (2 * pi * sigma_x * sigma_y)
+  term2 <- -((x - mu_x)^2 / (2 * sigma_x^2) + (y - mu_y)^2 / (2 * sigma_y^2))
+  return(term1 * exp(term2))
+}
+```
+
+### beräkningar
+
+```{r}
+nvalues <- 1000
+ax = 0
+bx = 1
+ay = 0
+by = 1
+
+cat("n:",nvalues,", ax:",ax,", bx:",bx,", ay:",ay, ", by:",by,"\n")
+
+fxy1SolutionPseudo <- mcInt2Dim(nvalues, fxy1, ax, ay, bx, by, RNG = "Pseudo")
+cat("Pseudoskattning:",fxy1SolutionPseudo,"\n")
+fxy1SolutionQuasi <- mcInt2Dim(nvalues, fxy1, ax, ay, bx, by, RNG = "Quasi")
+cat("Quasiskattning:",fxy1SolutionQuasi,"\n")
+
+fxy2SolutionPseudo <- mcInt2Dim(nvalues, fxy2, ax, ay, bx, by, RNG = "Pseudo")
+cat("Pseudoskattning:",fxy2SolutionPseudo,"\n")
+fxy2SolutionQuasi <- mcInt2Dim(nvalues, fxy2, ax, ay, bx, by, RNG = "Quasi")
+cat("Quasiskattning:",fxy2SolutionQuasi,"\n")
+
+bivNFSolutionPseudo <- mcInt2Dim(nvalues, bivNF, ax, ay, bx, by, RNG = "Pseudo")
+cat("Pseudoskattning:",bivNFSolutionPseudo,"\n")
+bivNFSolutionQuasi <- mcInt2Dim(nvalues, bivNF, ax, ay, bx, by, RNG = "Quasi")
+cat("Quasiskattning:",bivNFSolutionQuasi,"\n")
+```
+
+# Funktion av n-dimensionell mcIntegration
+
+```{r}
+
+mcIntNDim <- function(nvalues, nDim, fDim, vectorLowerLimit, vectorUpperLimit, RNG = c("Quasi", "Pseudo")) {
+  
+  randomVariables <- matrix(0, nvalues, nDim)
+  
+  if (RNG == "Quasi"){
+    for (j in 1:nDim) {
+      randomVariables[, j] <- vectorLowerLimit[j] + (vectorUpperLimit[j] - vectorLowerLimit[j])*sobol(nvalues) #problem med sobol, varje kolumn blir likadan
+    }
+  }
+  
+  else if(RNG == "Pseudo"){
+    for (j in 1:nDim) {
+      randomVariables[, j] <- runif(nvalues, vectorLowerLimit[j], vectorUpperLimit[j])
+    }
+  }
+  
+  sumFn <- 0
+  for(i in 1:nvalues){
+    sumFn <- sumFn + do.call(fDim, as.list(randomVariables[i, ]))
+  }
+  mean <- sumFn /nvalues
+  estimate <- mean * prod(vectorUpperLimit - vectorLowerLimit)
+
+  return(estimate)
+  
+    
+}
+```
+
+
+## test 2dim f = xy
+
+```{r}
+nvalues <- 10000
+nDim <- 2
+vectorLowerLimit <- c(0, 0)
+vectorUpperLimit <- c(1, 1)
+
+mcIntNDim(nvalues, nDim, fxy2, vectorLowerLimit, vectorUpperLimit, RNG = "Pseudo")
+mcIntNDim(nvalues, nDim, fxy2, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi")
+```
+
+Stor skillnad
+
+## test 3dim
+
+```{r}
+fxyz <-function(x,y,z){
+  return(x^2+y^2+z^2)
+}
+
+nvalues <- 10000
+nDim <- 3
+vectorLowerLimit <- c(-1, -5, 2)
+vectorUpperLimit <- c(1, 1, 6)
+
+mcIntNDim(nvalues, nDim, fxyz, vectorLowerLimit, vectorUpperLimit, RNG = "Pseudo")
+mcIntNDim(nvalues, nDim, fxyz, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi")
+```
+
+## test 6dim
+```{r}
+f6Dim <-function(x1,x2,x3,x4,x5,x6){
+  return(x1*x2+ x3^2 + x4^4 -x4^5*x6)
+}
+nvalues <- 10000
+nDim <- 6
+vectorLowerLimit <- c(-1, -5, 2,0,0,0)
+vectorUpperLimit <- c(1, 1, 6, 2,1,3)
+
+mcIntNDim(nvalues, nDim, f6Dim, vectorLowerLimit, vectorUpperLimit, RNG = "Pseudo")
+mcIntNDim(nvalues, nDim, f6Dim, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi")
+```
+
+
+
+
+
+
+
+

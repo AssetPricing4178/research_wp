@@ -8,3 +8,7 @@ Owen, A. B. (2003). The dimension distribution and quadrature test functions. St
 1-–17.
 Sobol’, I. M. and Asotsky, D. I. (2003). One more experiment on estimating high-dimensional
 integrals by quasi-Monte Carlo methods. Math. Comput. Simul. 62, 255—263.
+
+
+REPO paket qrng
+https://github.com/cran/qrng
