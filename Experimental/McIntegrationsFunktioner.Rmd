@@ -1,10 +1,15 @@
+```{r}
+library(qrng)
+```
+
 # Funktion för 2dimensionell MC-integration
 
 ```{r}
 mcInt2Dim <- function(nvalues, fxy, ax, ay, bx, by, RNG = c("Quasi", "Pseudo")){
   if (RNG == "Quasi"){
-  x <- ax + (bx - ax) * sobol(nvalues, init = 123)
-  y <- ay + (by - ay) * sobol(nvalues, init = 321)
+  sobolMatrix <- sobol(nvalues, 2)
+  x <- ax + (bx - ax) * sobolMatrix[,1]
+  y <- ay + (by - ay) * sobolMatrix[,2]
   
   
   print((bx-ax)*(by-ay))
@@ -16,7 +21,6 @@ mcInt2Dim <- function(nvalues, fxy, ax, ay, bx, by, RNG = c("Quasi", "Pseudo")){
   else if(RNG == "Pseudo"){
     x <- runif(nvalues, ax, bx)
     y <- runif(nvalues, ay, by)
-    print(sum(fxy(x,y)))
     mean <- mean(fxy(x,y))
     estimate <-(bx-ax)*(by-ay)*mean
     return(estimate)
@@ -83,8 +87,9 @@ mcIntNDim <- function(nvalues, nDim, fDim, vectorLowerLimit, vectorUpperLimit, R
   randomVariables <- matrix(0, nvalues, nDim)
   
   if (RNG == "Quasi"){
+    sobolMatrix <- sobol(nvalues, nDim)
     for (j in 1:nDim) {
-      randomVariables[, j] <- vectorLowerLimit[j] + (vectorUpperLimit[j] - vectorLowerLimit[j])*sobol(nvalues) #problem med sobol, varje kolumn blir likadan
+      randomVariables[, j] <- vectorLowerLimit[j] + (vectorUpperLimit[j] - vectorLowerLimit[j])*sobolMatrix[,j]
     }
   }
   
@@ -98,6 +103,7 @@ mcIntNDim <- function(nvalues, nDim, fDim, vectorLowerLimit, vectorUpperLimit, R
   for(i in 1:nvalues){
     sumFn <- sumFn + do.call(fDim, as.list(randomVariables[i, ]))
   }
+  
   mean <- sumFn /nvalues
   estimate <- mean * prod(vectorUpperLimit - vectorLowerLimit)
 
@@ -120,7 +126,6 @@ mcIntNDim(nvalues, nDim, fxy2, vectorLowerLimit, vectorUpperLimit, RNG = "Pseudo
 mcIntNDim(nvalues, nDim, fxy2, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi")
 ```
 
-Stor skillnad
 
 ## test 3dim
 
@@ -143,6 +148,7 @@ mcIntNDim(nvalues, nDim, fxyz, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi"
 f6Dim <-function(x1,x2,x3,x4,x5,x6){
   return(x1*x2+ x3^2 + x4^4 -x4^5*x6)
 }
+
 nvalues <- 10000
 nDim <- 6
 vectorLowerLimit <- c(-1, -5, 2,0,0,0)
