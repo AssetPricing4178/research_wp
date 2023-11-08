@@ -10,9 +10,8 @@ mcInt2Dim <- function(nvalues, fxy, ax, ay, bx, by, RNG = c("Quasi", "Pseudo")){
   sobolMatrix <- sobol(nvalues, 2)
   x <- ax + (bx - ax) * sobolMatrix[,1]
   y <- ay + (by - ay) * sobolMatrix[,2]
+
   
-  
-  print((bx-ax)*(by-ay))
   mean <- mean(fxy(x,y))
   estimate <-(bx-ax)*(by-ay)*mean
   return(estimate)
@@ -144,6 +143,7 @@ mcIntNDim(nvalues, nDim, fxyz, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi"
 ```
 
 ## test 6dim
+
 ```{r}
 f6Dim <-function(x1,x2,x3,x4,x5,x6){
   return(x1*x2+ x3^2 + x4^4 -x4^5*x6)
@@ -151,8 +151,8 @@ f6Dim <-function(x1,x2,x3,x4,x5,x6){
 
 nvalues <- 10000
 nDim <- 6
-vectorLowerLimit <- c(-1, -5, 2,0,0,0)
-vectorUpperLimit <- c(1, 1, 6, 2,1,3)
+vectorLowerLimit <- c(-1, -5, 2, 0, 0, 0)
+vectorUpperLimit <- c(1,   1, 6, 2, 1, 3)
 
 mcIntNDim(nvalues, nDim, f6Dim, vectorLowerLimit, vectorUpperLimit, RNG = "Pseudo")
 mcIntNDim(nvalues, nDim, f6Dim, vectorLowerLimit, vectorUpperLimit, RNG = "Quasi")
