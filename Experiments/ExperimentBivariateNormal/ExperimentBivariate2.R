@@ -2,10 +2,10 @@ source("MCIntegrationFunctions.R")
 source("ProbabilityDensityFunctions.R")
 
 nseries <- 2
-nvalues <- 1000
+nvalues <- 5000
 nDim <- 2
-vectorLowerLimit <- c(-1, -1)
-vectorUpperLimit <- c(1, 1)
+vectorLowerLimit <- c(-50, -50)
+vectorUpperLimit <- c(50, 50)
 vectorRng <- c("Quasi", "Pseudo")
 muVector <- c(0,0)
 corr <- 0
@@ -40,7 +40,7 @@ matrixQuasi <- matrixQuasi[,-1]
 
 #pdf(file = "VarianceOfEstimateCorrelatedBivariateNormal.pdf")
 plot(correlationSeq, matrixQuasi[2,], main = "Variance-Quasi" 
-     ,cex = 1, pch = 20, col = "red", type ='l', xlab = "correlation", ylab = "Variance of estimate")
+     ,cex = 1, pch = 20, col = "red",  xlab = "correlation", ylab = "Variance of estimate")
 plot(correlationSeq, matrixPseudo[2,], main = "Variance-Pseudo" 
-     ,cex = 1, pch = 20, col = "blue", type ='l', xlab = "correlation", ylab = "Variance of estimate")
+     ,cex = 1, pch = 20, col = "blue", xlab = "correlation", ylab = "Variance of estimate")
 #dev.off()

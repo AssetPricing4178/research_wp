@@ -1,10 +1,4 @@
-# Install and load the necessary packages
-if (!requireNamespace("rgl", quietly = TRUE)) {
-  install.packages("rgl")
-}
-if (!requireNamespace("animation", quietly = TRUE)) {
-  install.packages("animation")
-}
+
 library(rgl)
 library(animation)
 
