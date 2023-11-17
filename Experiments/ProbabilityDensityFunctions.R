@@ -10,7 +10,9 @@ nDimNormal <- function( vectorVariables, nDim, muVector = rep(0, nDim), covMatri
 #nåt knasigt med denna
 nDimTStudent <- function(vectorVariables, nDim, muVector = NULL, df, covMatrix = NULL){
   term1 <-gamma((df+nDim)/2)
-  term2 <-gamma(df/2)*df^(nDim/2)*det(covMatrix)^(0.5)
-  term3 <-(1 + 1/df*t(vectorVariables-muVector) %*% inv(covMatrix) %*% (vectorVariables-muVector))^-(df+nDim)/2
+  term2 <-gamma(df/2)*(df^(nDim/2))*(pi^(nDim/2))*sqrt(det(covMatrix))
+  term3 <-(1 + 1/df*t(vectorVariables-muVector) %*% inv(covMatrix) %*% (vectorVariables-muVector))^(-(df+nDim)/2)
   return(term1/term2*term3)
 }
+
+
