@@ -1,5 +1,5 @@
-source("MCIntegrationFunctions.R")
-source("ProbabilityDensityFunctions.R")
+source("../../Functions/ProbabilityDensityFunctions.R")
+source("../../Functions/MCIntegrationFunctions.R")
 library(mvtnorm)
 
 nseries <- 2

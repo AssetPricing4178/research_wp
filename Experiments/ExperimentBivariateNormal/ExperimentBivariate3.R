@@ -1,6 +1,5 @@
-source("MCIntegrationFunctions.R")
-source("ProbabilityDensityFunctions.R")
-
+source("../../Functions/ProbabilityDensityFunctions.R")
+source("../../Functions/MCIntegrationFunctions.R")
 nseries <- 2
 nvalues <- 1000
 nDim <- 3
