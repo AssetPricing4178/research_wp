@@ -18,34 +18,17 @@ generateCovarianceMatrix <- function(correlationVector) {
   return(covMatrix)
 }
 
+#dmvnorm???
 #ndim normal dist wikipedia multivariate normal distribution
 nDimNormal <- function( vectorVariables, nDim, muVector, covMatrix, calcEX =  FALSE, calcVX = FALSE){
-  
-  #if(calcEX){
-  #  term1 <- exp(-0.5 * t(vectorVariables-muVector) %*% inv(covMatrix) %*% (vectorVariables-muVector)) 
-  #  term2 <- ((2*pi)^nDim * det(covMatrix))^0.5
-  #  term3 <- vectorVariables
-  #  EX <- vectorVariables * term1/term2
-  #  print(dim(EX))
-  #  print(EX)
-  #  return(EX)
-  #}
-  
-  #else if(calcVX){
-  #  term1 <- exp(-0.5 * t(vectorVariables-muVector) %*% inv(covMatrix) %*% (vectorVariables-muVector)) 
-  #  term2 <- ((2*pi)^nDim * det(covMatrix))^0.5
-  #  term3 <- vectorVariables
-  #  EX <- term3 * term1/term2
-  #  EX2 <- term3^2*term1/term2
-  #  return(EX2 -EX^2)
-  #}
-  #
-  #else{
-    term1 <- exp(-0.5 * t(vectorVariables-muVector) %*% inv(covMatrix) %*% (vectorVariables-muVector)) 
+  print(dim(t(vectorVariables-muVector)))
+  print(dim(solve(covMatrix)))
+    term1 <- exp(-0.5 * t(vectorVariables-muVector) %*% solve(covMatrix) %*% (vectorVariables-muVector)) 
     term2 <- ((2*pi)^nDim * det(covMatrix))^0.5
     return(term1/term2)
-  #}
 }
+
+#dmvt???
 
 #nåt knasigt med denna
 nDimTStudent <- function(vectorVariables, nDim, muVector = NULL, df, covMatrix = NULL){

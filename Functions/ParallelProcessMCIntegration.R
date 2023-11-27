@@ -1,4 +1,3 @@
-  # Make sure to have the necessary library loaded for dmvnorm
 library(qrng)
 library(pryr)
 library(mvtnorm)
@@ -29,32 +28,6 @@ mcIntNDim <- function(f, lower, upper, muVector, covMatrix,
   meanEstimate <- mean(sum)
   estimate <- prod(upper - lower) * meanEstimate
   return(estimate)
-}
-
-mcIntNDimSequentialWorks <- function(f, lower, upper, muVector, covMatrix, RNG, nValues, df = NULL, windowSize = 1000) {
-  windowSize <- nValues
-  gc()
-  nDim <- length(upper)
-  
-  if (RNG == "Sobol") {
-    randomVariables <- t(t(sobol(nValues, nDim)) * (upper - lower)) + lower
-  } else if (RNG == "Halton") {
-    randomVariables <- t(t(ghalton(nValues, nDim)) * (upper - lower)) + lower
-  } else {
-    randomVariables <- matrix(runif(nValues * nDim, lower, upper), nValues, nDim)
-  }
-  
- 
-  
-  values <- f(randomVariables, mean = muVector, sigma = covMatrix)
-  
-  # Calculate the cumulative sum of the results
-  cumulativeSum <- as.vector(cumsum(values))
-  
-  # Store the last n-windowSize values for storage purposes
-  sequentialEstimateVector <- prod(upper - lower) * tail(cumulativeSum, windowSize) / seq_along(tail(cumulativeSum, windowSize))
-  
-  return(sequentialEstimateVector)
 }
 
 mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix, 
@@ -109,9 +82,6 @@ mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix,
   return(sequentialEstimateVector)
 }
 
-
-
-
 compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
                                         , nValues, start = 1, df = NULL){
   if (is.null(df)) {
@@ -122,30 +92,30 @@ compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
   
   
   sobolTime <- system.time({
-  sobolVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
-                                     RNG = "Sobol", nValues)
+    sobolVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
+                                       RNG = "Sobol", nValues)
   })["elapsed"]
   
   
   haltonTime <- system.time({
-  haltonVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
-                                      RNG = "Halton", nValues)
+    haltonVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
+                                        RNG = "Halton", nValues)
   })["elapsed"]
   
- 
+  
   pseudoTime <- system.time({
-  pseudoVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
-                                      RNG = "Pseudo", nValues)
+    pseudoVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
+                                        RNG = "Pseudo", nValues)
   })["elapsed"]
   
   
   
   
- 
+  
   estimateVector <- c(Sobol = tail(sobolVector, 1), Halton = tail(haltonVector, 1),
-                     Pseudo = tail(pseudoVector, 1) )
+                      Pseudo = tail(pseudoVector, 1) )
   varianceVector <- c(Sobol = var(sobolVector[start:nValues]), Halton = var(haltonVector[start:nValues]),
-                    Pseudo = var(pseudoVector[start:nValues]) )
+                      Pseudo = var(pseudoVector[start:nValues]) )
   mseVector <-c(Sobol = mean((trueValue -sobolVector[start:nValues])^2), 
                 Halton = mean((trueValue -haltonVector[start:nValues])^2),
                 Pseudo = mean((trueValue -pseudoVector[start:nValues])^2) )
@@ -156,5 +126,3 @@ compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
   return(estimateMatrix)
   
 }
-
-
