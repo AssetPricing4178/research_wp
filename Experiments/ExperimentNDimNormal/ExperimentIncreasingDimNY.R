@@ -1,8 +1,8 @@
-#source("../../Functions/ParallelProcessMCIntegration.R")
-source("../../Functions/MCIntegrationFunctions.R")
+source("../../Functions/ParallelProcessMCIntegration.R")
+#source("../../Functions/MCIntegrationFunctions.R")
 library(rootSolve)
 start <- 100
-dimSeq <- 8:10
+dimSeq <- 2:10
 
 sobolMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 4)
 haltonMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 4)
@@ -23,7 +23,7 @@ lower <- rep(lowerX,nDim)
 upper <- rep(5,nDim)
 muVector <- rep(0,nDim)
 covMatrix <- diag(1, nDim)
-nValues <- 10^(nDim)
+nValues <- 15^(nDim)
 nValuesGraph <- append(nValuesGraph, nValues)
 print(paste("#Generated numbers:",nValues*nDim))
 
