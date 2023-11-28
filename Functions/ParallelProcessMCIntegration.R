@@ -1,4 +1,5 @@
 library(qrng)
+#library(randtoolbox)
 library(pryr)
 library(mvtnorm)
 library(foreach)
@@ -7,7 +8,7 @@ library(doParallel)
 mcIntNDim <- function(f, lower, upper, muVector, covMatrix, 
                       RNG, nValues, df = NULL) {
   nDim <- length(upper)
-  randomVariables <- matrix(0, nValues, nDim)
+  #randomVariables <- matrix(0, nValues, nDim)
   
   if (RNG == "Sobol") {
     sobolMatrix <- sobol(nValues, nDim)
@@ -30,9 +31,11 @@ mcIntNDim <- function(f, lower, upper, muVector, covMatrix,
   return(estimate)
 }
 
+#nValues =< 2^32-1
 mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix, 
-                                RNG, nValues, df = NULL, numCores = 4, chunkSize = 8) {
+                                RNG, nValues, df = NULL, numCores = 4, chunkSize = 64) {
   
+  nValues <- min(nvalues, 2^31-1)# limit of qrng functions
   gc()
   nDim <- length(upper)
   
@@ -42,11 +45,6 @@ mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix,
   
   # Load necessary libraries on each worker
   clusterEvalQ(cl, library(qrng))
-  
-  # Set the chunk size for foreach
-  if (is.null(chunkSize)) {
-    chunkSize <- ceiling(nValues / numCores)
-  }
   
   # Function to combine results from chunks
   combineChunks <- function(...) c(...)

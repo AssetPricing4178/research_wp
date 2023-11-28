@@ -1,7 +1,8 @@
-source("../../Functions/ParallelProcessMCIntegration.R")
+#source("../../Functions/ParallelProcessMCIntegration.R")
+source("../../Functions/MCIntegrationFunctions.R")
 library(rootSolve)
 start <- 100
-dimSeq <- 6:10
+dimSeq <- 8:10
 
 sobolMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 4)
 haltonMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 4)
@@ -22,10 +23,12 @@ lower <- rep(lowerX,nDim)
 upper <- rep(5,nDim)
 muVector <- rep(0,nDim)
 covMatrix <- diag(1, nDim)
-nValues <- 32^(nDim)
+nValues <- 10^(nDim)
 nValuesGraph <- append(nValuesGraph, nValues)
 print(paste("#Generated numbers:",nValues*nDim))
 
+#print(mcIntNDim(f = dmvnorm,lower, upper, muVector, 
+#covMatrix = covMatrix, RNG = "Sobol", nValues = 10))
 
 # Run your function
 collectionMatrix <- compareMCIntegrationMetrics(f = dmvnorm,lower, upper, muVector, 
