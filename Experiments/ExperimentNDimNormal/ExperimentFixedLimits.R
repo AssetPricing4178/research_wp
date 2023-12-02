@@ -5,7 +5,7 @@ source("../../Functions/ParallelProcessMCIntegration.R")
 library(rootSolve)
 library(ggplot2)
 start <- 0
-dimSeq <- 4
+dimSeq <- 1:2
 
 sobolMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 6)
 haltonMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 6)
@@ -25,7 +25,7 @@ for (nDim in dimSeq){
   upper <- rep(5,nDim)
   muVector <- rep(0,nDim)
   covMatrix <- diag(1, nDim)
-  nValues <- 100^nDim
+  nValues <- 10^nDim
   nValuesGraph <- append(nValuesGraph, nValues*nDim)
   print(paste("#Generated numbers:",nValues*nDim))
   
@@ -35,18 +35,10 @@ for (nDim in dimSeq){
   
   
   
-  sobolMatrix[nDim, ] <- collectionMatrix[1, ]
-  #sobolMatrix[, 5] <- apply(sobolMatrix, 1, function(row) 0.05^row - row[1])
-  #sobolMatrix[, 5] <- sobolMatrix[,6] - sobolMatrix[,1]
-  
-  haltonMatrix[nDim, ] <- collectionMatrix[2, ]
-  #haltonMatrix[, 5] <- apply(haltonMatrix, 1, function(row) 0.05^row - row[1])
-  #haltonMatrix[,5] <- haltonMatrix[,6] - haltonMatrix[,1]
-  
-  
-  pseudoMatrix[nDim, ] <- collectionMatrix[3, ]
-  #pseudoMatrix[, 5] <- apply(pseudoMatrix, 1, function(row) 0.05^row - row[1])
-  #pseudoMatrix[, 5] <- pseudoMatrix[,6] - pseudoMatrix[,1]
+  sobolMatrix[nDim, ] <- collectionMatrix$estimateMatrix[1,]
+  haltonMatrix[nDim, ] <- collectionMatrix$estimateMatrix[2,]
+  pseudoMatrix[nDim, ] <- collectionMatrix$estimateMatrix[3,]
+ 
   
 }
 
