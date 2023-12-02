@@ -107,7 +107,8 @@ compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
   output <-list(
     estimateMatrix = estimateMatrix,
     sobolVector = sobolVector,
-    pseudoVector = pseudoVector
+    pseudoVector = pseudoVector,
+    haltonVector = haltonVector
   )
   return(output)
   

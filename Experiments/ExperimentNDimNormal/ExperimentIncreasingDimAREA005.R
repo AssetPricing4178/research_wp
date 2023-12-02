@@ -2,12 +2,17 @@ source("../../Functions/ParallelProcessMCIntegration.R")
 #source("../../Functions/MCIntegrationFunctions.R")
 #source("../../Functions/SegmentedMCIntegrationFunctions.R")
 library(rootSolve)
+library(ggplot2)
 start <- 0
-dimSeq <- 1:4
+dimSeq <- 1:3
+startingNvalues <-10
 
-sobolMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 6)
-haltonMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 6)
-pseudoMatrix <-matrix(0,nrow = length(dimSeq)+1, ncol = 6)
+sobolMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
+haltonMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
+pseudoMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
+sequentialSobolEstimateMatrix <- matrix(NA,nrow = length(dimSeq), ncol = startingNvalues^tail(dimSeq,1))
+sequentialPseudoEstimateMatrix <- matrix(NA,nrow = length(dimSeq), ncol = startingNvalues^tail(dimSeq,1))
+sequentialHaltonEstimateMatrix <- matrix(NA,nrow = length(dimSeq), ncol = startingNvalues^tail(dimSeq,1))
 
 colnames(sobolMatrix) <- c("Estimate", "Variance", "MSE", "CalcTime","Std. Estimate", "True value")
 colnames(haltonMatrix) <- c("Estimate", "Variance", "MSE", "CalcTime","Std. Estimate", "True value")
@@ -45,18 +50,13 @@ collectionMatrix <- compareMCIntegrationMetrics(f = dmvnorm,lower, upper, muVect
 
 
 
-sobolMatrix[nDim, ] <- collectionMatrix[1, ]
-#sobolMatrix[, 5] <- apply(sobolMatrix, 1, function(row) 0.05^row - row[1])
-sobolMatrix[, 5] <- sobolMatrix[,6] - sobolMatrix[,1]
+sobolMatrix[nDim, ] <- collectionMatrix$estimateMatrix[1,]
+haltonMatrix[nDim, ] <- collectionMatrix$estimateMatrix[2,]
+pseudoMatrix[nDim, ] <- collectionMatrix$estimateMatrix[3,]
 
-haltonMatrix[nDim, ] <- collectionMatrix[2, ]
-#haltonMatrix[, 5] <- apply(haltonMatrix, 1, function(row) 0.05^row - row[1])
-haltonMatrix[,5] <- haltonMatrix[,6] - haltonMatrix[,1]
-
-
-pseudoMatrix[nDim, ] <- collectionMatrix[3, ]
-#pseudoMatrix[, 5] <- apply(pseudoMatrix, 1, function(row) 0.05^row - row[1])
-pseudoMatrix[, 5] <- pseudoMatrix[,6] - pseudoMatrix[,1]
+sequentialSobolEstimateMatrix[nDim,1:nValues] <- collectionMatrix$sobolVector
+sequentialPseudoEstimateMatrix[nDim,1:nValues] <- collectionMatrix$pseudoVector
+sequentialHaltonEstimateMatrix[nDim,1:nValues] <- collectionMatrix$haltonVector
 
 }
 
