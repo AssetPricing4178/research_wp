@@ -23,13 +23,22 @@ df <- data.frame(
   mseOverTimePseudo = pseudoMatrix[dimSeq, 3] / pseudoMatrix[dimSeq, 4]
 )
 
+
+
+
+write.table(sequentialSobolEstimateMatrix, file = "Sobol.csv", sep = ";", row.names = FALSE, col.names = FALSE)
+write.table(sequentialPseudoEstimateMatrix, file = "Pseudo.csv", sep = ";", row.names = FALSE, col.names = FALSE)
+write.table(sequentialHaltonEstimateMatrix, file = "Halton.csv", sep = ";", row.names = FALSE, col.names = FALSE)
+
+
+
 # Generated values per dimension
 p1 <- ggplot(df, aes(x = dimSeq, y = nValuesGraph, color = "Generated values")) +
   geom_line() +
   labs(title = "Generated values per dimension", x = "Dimension", y = "Generated values") +
   theme_minimal()
 
-ggsave("GeneratedValuesPerDimension.pdf", plot = p1, width = 10, height = 8)
+ggsave("GeneratedValuesPerDimension.png", plot = p1, width = 10, height = 8)
 
 # log Generated values per dimension
 p2 <- ggplot(df, aes(x = dimSeq, y = log(nValuesGraph), color = "log Generated values")) +
@@ -37,7 +46,7 @@ p2 <- ggplot(df, aes(x = dimSeq, y = log(nValuesGraph), color = "log Generated v
   labs(title = "Generated values per dimension", x = "Dimension", y = "Generated values") +
   theme_minimal()
 
-ggsave("LogGeneratedValuesPerDimension.pdf", plot = p2, width = 10, height = 8)
+ggsave("LogGeneratedValuesPerDimension.png", plot = p2, width = 10, height = 8)
 
 # Estimate by dimension
 p3 <- ggplot(df, aes(x = dimSeq)) +
@@ -49,7 +58,7 @@ p3 <- ggplot(df, aes(x = dimSeq)) +
   theme_minimal() +
   scale_color_manual(values = c("Sobol" = "blue", "Halton" = "green", "Pseudo" = "red"))
 
-ggsave("EstimateByDimension.pdf", plot = p3, width = 10, height = 8)
+ggsave("EstimateByDimension.png", plot = p3, width = 10, height = 8)
 
 # log Estimate by dimension
 p4 <- ggplot(df, aes(x = dimSeq)) +
@@ -61,7 +70,7 @@ p4 <- ggplot(df, aes(x = dimSeq)) +
   theme_minimal() +
   scale_color_manual(values = c("Sobol" = "blue", "Halton" = "green", "Pseudo" = "red"))
 
-ggsave("LogEstimateByDimension.pdf", plot = p4, width = 10, height = 8)
+ggsave("LogEstimateByDimension.png", plot = p4, width = 10, height = 8)
 
 # Variance of estimate by dimension
 p5 <- ggplot(df, aes(x = dimSeq)) +
@@ -72,7 +81,7 @@ p5 <- ggplot(df, aes(x = dimSeq)) +
   theme_minimal() +
   scale_color_manual(values = c("Sobol" = "blue", "Halton" = "green", "Pseudo" = "red"))
 
-ggsave("VarianceOfEstimateByDimension.pdf", plot = p5, width = 10, height = 8)
+ggsave("VarianceOfEstimateByDimension.png", plot = p5, width = 10, height = 8)
 
 # log Variance of estimate by dimension
 p6 <- ggplot(df, aes(x = dimSeq)) +
@@ -83,7 +92,7 @@ p6 <- ggplot(df, aes(x = dimSeq)) +
   theme_minimal() +
   scale_color_manual(values = c("Sobol" = "blue", "Halton" = "green", "Pseudo" = "red"))
 
-ggsave("LogVarianceOfEstimateByDimension.pdf", plot = p6, width = 10, height = 8)
+ggsave("LogVarianceOfEstimateByDimension.png", plot = p6, width = 10, height = 8)
 
 # MSE of estimate by dimension
 p7 <- ggplot(df, aes(x = dimSeq)) +
@@ -94,7 +103,7 @@ p7 <- ggplot(df, aes(x = dimSeq)) +
   theme_minimal() +
   scale_color_manual(values = c("Sobol" = "blue", "Halton" = "green", "Pseudo" = "red"))
 
-ggsave("MSEOfEstimateByDimension.pdf", plot = p7, width = 10, height = 8)
+ggsave("MSEOfEstimateByDimension.png", plot = p7, width = 10, height = 8)
 
 # logMSE of estimate by dimension
 p8 <- ggplot(df, aes(x = dimSeq)) +
@@ -105,7 +114,7 @@ p8 <- ggplot(df, aes(x = dimSeq)) +
   theme_minimal() +
   scale_color_manual(values = c("Sobol" = "blue", "Halton" = "green", "Pseudo" = "red"))
 
-ggsave("LogMSEOfEstimateByDimension.pdf", plot = p8, width = 10, height = 8)
+ggsave("LogMSEOfEstimateByDimension.png", plot = p8, width = 10, height = 8)
 
 # Calculation time of estimate by dimension
 p9 <- ggplot(df, aes(x = dimSeq)) +
@@ -113,5 +122,6 @@ p9 <- ggplot(df, aes(x = dimSeq)) +
   geom_line(aes(y = haltonTime, color = "Halton"), size = 0.2) +
   geom_line(aes(y = pseudoTime, color = "Pseudo"), size = 0.2) +
   labs(title = "Calculation time of estimate by dimension", x = "Dimension", y = "Calculation time") +
-  theme_minimal() +
-  scale_color
+  theme_minimal() 
+
+ggsave("CalculationTimeofEstimateByDimension.png", plot = p8, width = 10, height = 8)
