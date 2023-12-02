@@ -54,69 +54,8 @@ mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix,
 }
 
 
-#nValues =< 2^32-1
-mcIntNDimSequentialConstantN <- function(f, lower, upper, muVector, covMatrix, 
-                                RNG, nValues, df = NULL, numCores = 2, chunkSize = NULL) {
-  
-  nValuesPseudo <-nValues
-  nValues <- min(nValues, 2^31-1)# limit of qrng functions
 
-  gc()
-  nDim <- length(upper)
-  
-  # Register parallel backend
-  cl <- makeCluster(numCores)
-  registerDoParallel(cl)
-  
-  # Load necessary libraries on each worker
-  clusterEvalQ(cl, library(qrng))
-  
-  # Function to combine results from chunks
-  combineChunks <- function(...) c(...)
-  
-  if (!(RNG == "Pseudo")) {
-    chunkSize <- ceiling(nValues / (numCores * nDim))
-  } else {
-    chunkSize <- ceiling(nValuesPseudo / (numCores * nDim))
-  }
-  print(chunkSize)
-  # Reduce chunkSize for memory efficiency
-  chunkSize <- max(chunkSize, 5000)
-  print(chunkSize)
-  
-  if (RNG == "Sobol") {
-    print("Sobol")
-    randomVariables <- foreach(i = 1:numCores, .combine = combineChunks) %dopar% {
-      chunk <- t(t(sobol(chunkSize, nDim)) * (upper - lower)) + lower
-      f(chunk, mean = muVector, sigma = covMatrix)
-    }
-  } else if (RNG == "Halton") {
-    print("Halton")
-    randomVariables <- foreach(i = 1:numCores, .combine = combineChunks) %dopar% {
-      chunk <- t(t(ghalton(chunkSize, nDim)) * (upper - lower)) + lower
-      f(chunk, mean = muVector, sigma = covMatrix)
-    }
-  } else {
-    print("Pseudo")
-    randomVariables <- foreach(i = 1:numCores, .combine = combineChunks) %dopar% {
-      chunk <- matrix(runif(chunkSize * nDim, lower, upper), chunkSize, nDim)
-      f(chunk, mean = muVector, sigma = covMatrix)
-    }
-  }
-  
-  stopCluster(cl)
-  
-  # Combine results from different cores
-  values <- unlist(randomVariables)
-  
-  # Calculate the cumulative sum of the results
-  cumulativeSum <- as.vector(cumsum(values))
-  
-  # Store the last nValues values for storage purposes
-  sequentialEstimateVector <- prod(upper - lower) * cumulativeSum / seq_along(cumulativeSum)
-  
-  return(sequentialEstimateVector)
-}
+
 
 compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
                                         , nValues, start = 1, df = NULL){
@@ -144,15 +83,13 @@ compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
   print("Pseudo")
   pseudoTime <- system.time({
     pseudoVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
-                                        RNG = "Pseudo", nValues)
+                                        RNG = "Pseudo", nValuesPseudo)
   })["elapsed"]
   
-  
-  
-  
-  
+  #MSE and Varince vectors turn to NAs
   estimateVector <- c(Sobol = tail(sobolVector, 1), Halton = tail(haltonVector, 1),
                       Pseudo = tail(pseudoVector, 1) )
+
   varianceVector <- c(Sobol = var(sobolVector), Halton = var(haltonVector),
                       Pseudo = var(pseudoVector) )
   mseVector <-c(Sobol = mean((trueValue -sobolVector)^2), 
