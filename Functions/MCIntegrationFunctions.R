@@ -8,7 +8,7 @@ library(doParallel)
 mcIntNDim <- function(f, lower, upper, muVector, covMatrix, 
                       RNG, nValues, df = NULL) {
   nValuesPseudo <- nValues
-  nValues <- min(nvalues, 2^31-1)# limit of qrng functions
+  nValues <- min(nValues, 2^31-1)# limit of qrng functions
   nDim <- length(upper)
   
   #randomVariables <- matrix(0, nValues, nDim)
