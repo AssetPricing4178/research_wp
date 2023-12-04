@@ -28,9 +28,14 @@ Your introduction goes here.
 
 # Literature Review
 
+MAIN 1
 G. Leobacher and F. Pillichshammer, Introduction to quasi-Monte Carlo in-
-tegration and applications, Birkh¨auser/Springer, Cham, 2014.
-  Måste hittas
+tegration and applications, Birkh¨auser/Springer, Cham, 2014. Lättare kolla github
+
+Main 2
+Art B owen Monte Carlo and Quasi-Monte Methods Svårare
+  kolla github
+  Multivariate Gaussian Probabilities
 
 William J. Morokoff and Russel E. Caflisch, Quasi-Monte Carlo integration, J. Comput. Phys. 122 (1995), no. 2, 218–230. (At CiteSeer: [1])
   Kolla gitub
@@ -41,6 +46,7 @@ On curse of dimensionality...
 
 # RNG
   Bild jämförelse
+
 ## Pseudo
   Mersenne Twister
   https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/Random
@@ -48,8 +54,10 @@ On curse of dimensionality...
   
 
 ## Sobol
+  s.138 Leobacher
 
 ## Halton
+  s.40 Leobacher
 
 ## Complexity
 
@@ -74,15 +82,23 @@ On curse of dimensionality...
 
 ## MC-integration function in R
 
+\newpage
+
 ## The three cases explored
 
 1.Constant probability space, changing integration limits.
 2.Constant integration limits, changings probability space.
 3.Full probability space.
 
+\newpage 
+
 ## The effect of increasing dimension
 
+\newpage 
+
 ## The effect of sample size
+
+\newpage 
 
 ## The effect of covariance in low dimensional cases
 
@@ -101,6 +117,8 @@ On curse of dimensionality...
 ### Sample size
 
 ### Covariance
+
+\newpage 
 
 ## Multivariate t-distribution
 
