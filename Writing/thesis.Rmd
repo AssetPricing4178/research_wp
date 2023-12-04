@@ -1,0 +1,129 @@
+---
+title: "Exploring the Impact of Pseudo and Quasi Random Number Generators on Monte Carlo Integration for Multivariate Normal and t Distributions^[Preliminary draft. Please do not cite or circulate without permission from the author.]"
+author: "Marcus Stolz^[Department of Statistics, Lund University. Email: marcus.stolz@stat.lu.se.]&nbsp; & Jonathan Ramani Christopher^[Department of Statistics, Lund University. Email: jonathan.ramani@outlook.com.]" 
+date: "`r format(Sys.Date(), '%d %B %Y')`"                               
+output: pdf_document                                    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+\begin{center}
+\textbf{\large Abstract}
+\end{center}
+
+\begin{center}
+This is the abstract of your paper.
+\end{center}
+
+\newpage 
+
+# Introduction
+
+Your introduction goes here.
+
+\newpage 
+
+# Literature Review
+
+G. Leobacher and F. Pillichshammer, Introduction to quasi-Monte Carlo in-
+tegration and applications, Birkh¨auser/Springer, Cham, 2014.
+  Måste hittas
+
+William J. Morokoff and Russel E. Caflisch, Quasi-Monte Carlo integration, J. Comput. Phys. 122 (1995), no. 2, 218–230. (At CiteSeer: [1])
+  Kolla gitub
+
+On curse of dimensionality...
+  Kolla github
+\newpage 
+
+# RNG
+  Bild jämförelse
+## Pseudo
+  Mersenne Twister
+  https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/Random
+  https://en.wikipedia.org/wiki/Mersenne_Twister
+  
+
+## Sobol
+
+## Halton
+
+## Complexity
+
+\newpage
+
+# MC-Integration
+
+\newpage
+
+# Curse of dimensionality
+
+\newpage 
+
+# Multivariate normal, t distribution
+
+## Complexity of multivariate normal, t distribution.
+  Kolmogorov complexity?
+
+\newpage
+
+# Methodology
+
+## MC-integration function in R
+
+## The three cases explored
+
+1.Constant probability space, changing integration limits.
+2.Constant integration limits, changings probability space.
+3.Full probability space.
+
+## The effect of increasing dimension
+
+## The effect of sample size
+
+## The effect of covariance in low dimensional cases
+
+
+
+
+
+\newpage 
+
+# Results
+
+## Multivariate Normal
+
+### Increasing Dimension
+
+### Sample size
+
+### Covariance
+
+## Multivariate t-distribution
+
+### Increasing Dimension
+
+### Sample size
+
+### Covariance
+
+\newpage 
+
+# Conclusion
+
+Summarize your findings and conclude the paper.
+
+\newpage 
+
+# References
+
+
+
+
+
+
+
+
