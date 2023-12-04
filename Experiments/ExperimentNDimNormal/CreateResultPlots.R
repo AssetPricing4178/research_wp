@@ -26,9 +26,9 @@ df <- data.frame(
 
 
 
-write.table(sequentialSobolEstimateMatrix, file = "Sobol.csv", sep = ";", row.names = FALSE, col.names = FALSE)
-write.table(sequentialPseudoEstimateMatrix, file = "Pseudo.csv", sep = ";", row.names = FALSE, col.names = FALSE)
-write.table(sequentialHaltonEstimateMatrix, file = "Halton.csv", sep = ";", row.names = FALSE, col.names = FALSE)
+write.table(sequentialSobolEstimateMatrix, file = "Sobol.csv", sep = ";", row.names = FALSE, col.names   = c(dimSeq))
+write.table(sequentialPseudoEstimateMatrix, file = "Pseudo.csv", sep = ";", row.names = FALSE, col.names = c(dimSeq))
+write.table(sequentialHaltonEstimateMatrix, file = "Halton.csv", sep = ";", row.names = FALSE, col.names = c(dimSeq))
 
 
 

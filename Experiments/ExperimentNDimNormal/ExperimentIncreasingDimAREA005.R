@@ -6,8 +6,8 @@ library(dplyr)
 source("../../Functions/ParallelProcessMCIntegration.R")
 
 start <- 0
-dimSeq <- 1:3
-startingNvalues <- 100
+dimSeq <- 1:4
+startingNvalues <- 10
 
 sobolMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
 haltonMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
@@ -78,3 +78,7 @@ padded_halton_list <- pad_with_na(sequentialHaltonEstimateList, max_length)
 sequentialSobolEstimateMatrix <- bind_cols(lapply(padded_sobol_list, as.data.frame))
 sequentialPseudoEstimateMatrix <- bind_cols(lapply(padded_pseudo_list, as.data.frame))
 sequentialHaltonEstimateMatrix <- bind_cols(lapply(padded_halton_list, as.data.frame))
+
+colnames(sequentialSobolEstimateMatrix) <- c(dimSeq)
+colnames(sequentialPseudoEstimateMatrix) <- c(dimSeq)
+colnames(sequentialHaltonEstimateMatrix) <- c(dimSeq)

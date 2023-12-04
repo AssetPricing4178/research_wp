@@ -15,9 +15,10 @@ mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix,
   # Determine the number of values per batch
   batchSize <- ceiling(nValues / numBatches)
   
-  ## Create a list of batches directly
+  ## Create a list of batches directly How can make this more efficient?
   batches <- list()
   for (i in seq_len(numBatches)) {
+    gc()
     startIdx <- (i - 1) * batchSize + 1
     endIdx <- min(i * batchSize, nValues)
     batches[[i]] <- startIdx:endIdx
@@ -41,7 +42,7 @@ mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix,
       result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
     }
     
-    print(paste(RNG,",",nDim,",Processed batch", i, "of", length(batches)))
+    #Sprint(paste(RNG,",",nDim,",Processed batch", i, "of", length(batches)))
   }
   
   # Combine results from different batches
