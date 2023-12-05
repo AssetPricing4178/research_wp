@@ -23,26 +23,50 @@ mcIntNDimSequential <- function(f, lower, upper, muVector, covMatrix,
     endIdx <- min(i * batchSize, nValues)
     batches[[i]] <- startIdx:endIdx
   }
-  
   # Initialize a vector to store the results
   result_vector <- numeric(0)
   
-  # Process batches sequentially
-  for (i in seq_along(batches)) {
-    batchIndices <- batches[[i]]
+  if (is.null(df)) { #Normal
     
-    if (RNG == "Sobol") {
-      chunk <- t(t(sobol(length(batchIndices), nDim)) * (upper - lower)) + lower
-      result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
-    } else if (RNG == "Halton") {
-      chunk <- t(t(ghalton(length(batchIndices), nDim)) * (upper - lower)) + lower
-      result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
-    } else {
-      chunk <- matrix(runif(length(batchIndices) * nDim, lower, upper), length(batchIndices), nDim)
-      result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
+  
+    # Process batches sequentially
+    for (i in seq_along(batches)) {
+      batchIndices <- batches[[i]]
+    
+      if (RNG == "Sobol") {
+        chunk <- t(t(sobol(length(batchIndices), nDim)) * (upper - lower)) + lower
+        result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
+      } else if (RNG == "Halton") {
+        chunk <- t(t(ghalton(length(batchIndices), nDim)) * (upper - lower)) + lower
+        result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
+      } else {
+        chunk <- matrix(runif(length(batchIndices) * nDim, lower, upper), length(batchIndices), nDim)
+        result_vector <- c(result_vector, f(chunk, mean = muVector, sigma = covMatrix))
+      }
+    
+      #print(paste(RNG,",",nDim,",Processed batch", i, "of", length(batches)))
+    }
+  }
+  else{ #T-dist
+    # Process batches sequentially
+    
+    for (i in seq_along(batches)) {
+      batchIndices <- batches[[i]]
+      
+      if (RNG == "Sobol") {
+        chunk <- t(t(sobol(length(batchIndices), nDim)) * (upper - lower)) + lower
+        result_vector <- c(result_vector, f(chunk, delta = muVector, sigma = covMatrix, df = df))
+      } else if (RNG == "Halton") {
+        chunk <- t(t(ghalton(length(batchIndices), nDim)) * (upper - lower)) + lower
+        result_vector <- c(result_vector, f(chunk, delta = muVector, sigma = covMatrix, df = df))
+      } else {
+        chunk <- matrix(runif(length(batchIndices) * nDim, lower, upper), length(batchIndices), nDim)
+        result_vector <- c(result_vector, f(chunk, delta = muVector, sigma = covMatrix, df = df))
+      }
+      
+      #print(paste(RNG,",",nDim,",Processed batch", i, "of", length(batches)))
     }
     
-    #Sprint(paste(RNG,",",nDim,",Processed batch", i, "of", length(batches)))
   }
   
   # Combine results from different batches
@@ -64,9 +88,6 @@ compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
   nValues <- min(nValues, 2^31-1)
   if (is.null(df)) {
     trueValue <- pmvnorm(lower, upper, muVector, sigma = covMatrix)
-  } else {
-    trueValue <- pmvt(lower, upper, muVector, sigma = covMatrix, df = df)
-  }
   
   
   print("sobol")
@@ -87,10 +108,33 @@ compareMCIntegrationMetrics <- function(f, lower, upper, muVector, covMatrix
                                         RNG = "Pseudo", nValuesPseudo)
   })["elapsed"]
   
+} 
+  else {# T-dist
+    trueValue <- pmvt(lower, upper, muVector, sigma = covMatrix, df = df)
+    print("sobol")
+    
+    sobolTime <- system.time({
+      sobolVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
+                                         RNG = "Sobol", nValues, df = df)
+    })["elapsed"]
+    
+    print("halton")
+    haltonTime <- system.time({
+      haltonVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
+                                          RNG = "Halton", nValues, df = df)
+    })["elapsed"]
+    
+    print("Pseudo")
+    pseudoTime <- system.time({
+      pseudoVector <- mcIntNDimSequential(f, lower, upper, muVector, covMatrix, 
+                                          RNG = "Pseudo", nValuesPseudo, df = df)
+    })["elapsed"]
+  }
+  
   #MSE and Varince vectors turn to NAs
   estimateVector <- c(Sobol = tail(sobolVector, 1), Halton = tail(haltonVector, 1),
                       Pseudo = tail(pseudoVector, 1) )
-
+  
   varianceVector <- c(Sobol = var(sobolVector), Halton = var(haltonVector),
                       Pseudo = var(pseudoVector) )
   mseVector <-c(Sobol = mean((trueValue -sobolVector)^2), 
