@@ -1,7 +1,8 @@
+library(ggplot2)
 # Combine the data into a data frame
 df <- data.frame(
   dimSeq = dimSeq,
-  nValuesGraph = nValuesGraph,
+  #nValuesGraph = nValuesGraph,
   sobolEstimate = sobolMatrix[dimSeq, 1],
   haltonEstimate = haltonMatrix[dimSeq, 1],
   pseudoEstimate = pseudoMatrix[dimSeq, 1],
@@ -32,21 +33,20 @@ write.table(sequentialHaltonEstimateMatrix, file = "Halton.csv", sep = ";", row.
 
 
 
-# Generated values per dimension
-p1 <- ggplot(df, aes(x = dimSeq, y = nValuesGraph, color = "Generated values")) +
-  geom_line() +
-  labs(title = "Generated values per dimension", x = "Dimension", y = "Generated values") +
-  theme_minimal()
-
-ggsave("GeneratedValuesPerDimension.png", plot = p1, width = 10, height = 8)
+## Generated values per dimension
+#p1 <- ggplot(df, aes(x = dimSeq, y = nValuesGraph, color = "Generated values")) +
+#  geom_line() +
+#  labs(title = "Generated values per dimension", x = "Dimension", y = "Generated values") +
+#  theme_minimal()
+#ggsave("GeneratedValuesPerDimension.png", plot = p1, width = 10, height = 8)
 
 # log Generated values per dimension
-p2 <- ggplot(df, aes(x = dimSeq, y = log(nValuesGraph), color = "log Generated values")) +
-  geom_line() +
-  labs(title = "Generated values per dimension", x = "Dimension", y = "Generated values") +
-  theme_minimal()
+#p2 <- ggplot(df, aes(x = dimSeq, y = log(nValuesGraph), color = "log Generated values")) +
+#  geom_line() +
+#  labs(title = "Generated values per dimension", x = "Dimension", y = "Generated values") +
+#  theme_minimal()
 
-ggsave("LogGeneratedValuesPerDimension.png", plot = p2, width = 10, height = 8)
+#ggsave("LogGeneratedValuesPerDimension.png", plot = p2, width = 10, height = 8)
 
 # Estimate by dimension
 p3 <- ggplot(df, aes(x = dimSeq)) +
