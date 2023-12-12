@@ -6,8 +6,8 @@ library(dplyr)
 source("../../Functions/ParallelProcessMCIntegration.R")
 
 start <- 0
-dimSeq <- 1:3
-startingNvalues <- 100
+dimSeq <- 1:15
+startingNvalues <- 1000
 
 sobolMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
 haltonMatrix <-matrix(0,nrow = length(dimSeq), ncol = 6)
@@ -29,7 +29,7 @@ for (nDim in dimSeq) {
   muVector <- rep(0, nDim)
   covMatrix <- diag(1, nDim)
   
-  nValues <-  startingNvalues^nDim
+  nValues <-  startingNvalues#^nDim
   nValuesGraph <- append(nValuesGraph,  nValues * nDim)
   print(paste("#Generated numbers:", nValues * nDim))
   
