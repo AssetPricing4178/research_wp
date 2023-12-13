@@ -1,8 +1,8 @@
 library(ggplot2)
+dimSeq <- 1:7
 # Combine the data into a data frame
 df <- data.frame(
   dimSeq = dimSeq,
-  #nValuesGraph = nValuesGraph,
   sobolEstimate = sobolMatrix[dimSeq, 1],
   haltonEstimate = haltonMatrix[dimSeq, 1],
   pseudoEstimate = pseudoMatrix[dimSeq, 1],
@@ -23,7 +23,14 @@ df <- data.frame(
   mseOverTimeHalton = haltonMatrix[dimSeq, 3] / haltonMatrix[dimSeq, 4],
   mseOverTimePseudo = pseudoMatrix[dimSeq, 3] / pseudoMatrix[dimSeq, 4]
 )
-
+colnames(df) <- c("dimSeq", "sobolEstimate", "haltonEstimate", "pseudoEstimate", 
+                  "sobolVariance", "haltonVariance", "pseudoVariance", 
+                  "sobolMSE", "haltonMSE","pseudoMSE", 
+                  "sobolTime",
+                  "haltonTime", 
+                  "pseudoTime", "pseudoStdEstimate",
+                  "haltonStdEstimate", "sobolStdEstimate","trueValue", "mseOverTimeSobol", "mseOverTimeHalton"
+                  ,"mseOverTimePseudo")
 
 
 
@@ -124,4 +131,4 @@ p9 <- ggplot(df, aes(x = dimSeq)) +
   labs(title = "Calculation time of estimate by dimension", x = "Dimension", y = "Calculation time") +
   theme_minimal() 
 
-ggsave("CalculationTimeofEstimateByDimension.png", plot = p8, width = 10, height = 8)
+ggsave("CalculationTimeofEstimateByDimension.png", plot = p9, width = 10, height = 8)
