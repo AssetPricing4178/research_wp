@@ -1,0 +1,721 @@
+---
+title: "Does the Yield Curve Predict Recessions?"
+author: "Jonathan Ramani Krishnamachari"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Load necessary libraries
+library(fredr)      # For accessing FRED data
+library(dplyr)      # For data manipulation
+library(ggplot2)    # For plotting
+library(tidyverse)  # For data manipulation and ggplot2 compatibility
+
+# Set FRED API key
+fredr_set_key("dfdf7dff8e1f85865d60e113b4f67426")
+api_key <- fredr_get_key()
+
+# Define observation start and end dates
+start_date <- as.Date("1976-06-01")
+end_date <- as.Date("2024-04-01")
+
+# Retrieve data from FRED
+gs10 <- fredr(series_id = "GS10", 
+              observation_start = start_date, 
+              observation_end = end_date,
+              frequency = "m") %>%
+  select(date, value) %>%
+  rename(GS10 = value)
+
+gs2 <- fredr(series_id = "GS2", 
+             observation_start = start_date, 
+             observation_end = end_date,
+             frequency = "m") %>%
+  select(date, value) %>%
+  rename(GS2 = value)
+
+tb3ms <- fredr(series_id = "TB3MS", 
+               observation_start = start_date, 
+               observation_end = end_date,
+               frequency = "m") %>%
+  select(date, value) %>%
+  rename(TB3MS = value)
+
+t10y2y <- fredr(series_id = "T10Y2Y", 
+                observation_start = start_date, 
+                observation_end = end_date,
+                frequency = "m") %>%
+  select(date, value) %>%
+  rename(T10Y2Y = value)
+
+# Additional data retrieval
+recession <- fredr(series_id = "USRECD", 
+                   observation_start = start_date, 
+                   observation_end = end_date) %>%
+  select(date, value) %>%
+  rename(USRECD = value)
+
+fedfunds <- fredr(series_id = "FEDFUNDS", 
+                  observation_start = start_date, 
+                  observation_end = end_date) %>%
+  select(date, value) %>%
+  rename(FEDFUNDS = value)
+
+cpi <- fredr(series_id = "CPIAUCSL", 
+             observation_start = start_date, 
+             observation_end = end_date) %>%
+  select(date, value) %>%
+  rename(CPIAUCSL = value)
+
+# Merge datasets
+economic_data <- gs10 %>%
+  left_join(gs2, by = "date") %>%
+  left_join(tb3ms, by = "date") %>%
+  left_join(t10y2y, by = "date") %>%
+  left_join(recession, by = "date") %>%
+  left_join(fedfunds, by = "date") %>%
+  left_join(cpi, by = "date")
+
+# Calculate the real federal funds rate
+economic_data <- economic_data %>%
+  mutate(inflation = (CPIAUCSL / lag(CPIAUCSL, 12)) - 1,
+         real_fedfunds = FEDFUNDS - (inflation * 100))
+
+# Remove NA values
+economic_data <- na.omit(economic_data)
+
+# Calculate spreads and add to economic_data
+economic_data <- economic_data %>%
+  mutate(spread_10y_2y = GS10 - GS2,
+         spread_10y_3m = GS10 - TB3MS)
+
+# Print first few rows of the merged dataset
+head(economic_data)
+
+```
+
+We begin by retrieving several economic data series from the Federal Reserve Economic Data (FRED) database. The dataset includes:
+
+    10-Year Treasury Constant Maturity Rate (GS10)
+    2-Year Treasury Constant Maturity Rate (GS2)
+    3-Month Treasury Bill Secondary Market Rate (TB3MS)
+    10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity (T10Y2Y)
+    Recession Indicators (USRECD)
+    Effective Federal Funds Rate (FEDFUNDS)
+    Consumer Price Index for All Urban Consumers: All Items (CPIAUCSL)
+
+These series are retrieved for the period from June 1976 to April 2024. We use the fredr package to access the FRED API, and the dplyr package to manipulate the data and merge the different datasets based on the observation dates.
+
+
+Plotting T10Y2Y
+
+```{r}
+economic_data %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = T10Y2Y), color = "blue", linetype = "solid") +
+  geom_hline(yintercept = 0, color = "red", linetype = "solid") +
+  labs(title = "T10Y2Y with Horizontal Line at 0",
+       y = "T10Y2Y",
+       x = "Date") +
+  theme_minimal()
+```
+
+Plotting Spread between GS10 and GS2
+
+```{r}
+economic_data %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = spread_10y_2y), color = "purple", linetype = "solid") +
+  geom_hline(yintercept = 0, color = "red", linetype = "solid") +
+  labs(title = "Spread between GS10 and GS2 with Horizontal Line at 0",
+       y = "Spread (GS10 - GS2)",
+       x = "Date") +
+  theme_minimal()
+```
+
+Plotting Spread between GS10 and TB3MS
+
+```{r} 
+
+economic_data %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = spread_10y_3m), color = "orange", linetype = "solid") +
+  geom_hline(yintercept = 0, color = "red", linetype = "solid") +
+  labs(title = "Spread between GS10 and TB3MS with Horizontal Line at 0",
+       y = "Spread (GS10 - TB3MS)",
+       x = "Date") +
+  theme_minimal()
+```
+
+Multicolneairy test
+
+```{r}
+# Fit your model with an interaction term
+model_interaction <- glm(USRECD ~ spread_10y_2y + FEDFUNDS + real_fedfunds + FEDFUNDS * real_fedfunds,
+                         family = binomial(link = "probit"), data = economic_data)
+
+# Check VIF for the new model
+vif_values_interaction <- car::vif(model_interaction)
+print(vif_values_interaction)
+
+# Perform residual plot and heteroscedasticity test as before
+plot(model_interaction, which = 1)  # Residuals vs fitted values
+lmtest::bptest(model_interaction)   # Breusch-Pagan test for heteroscedasticity
+
+
+```
+
+
+\\ 
+
+Lag the spread for spread_10y_2y and spread_10_3m, frequency is 1 month, and add it to the dataset "economic_data"
+
+```{r include = FALSE}
+# Lag spreads by different orders (1, 2, 3, 4 months)
+na <- 3
+nb <- 6
+nc <- 12
+nd <- 24
+
+# spread 2y and 3m
+economic_data <- economic_data %>%
+  mutate(spread_10y_2y_lag_1 = lag(spread_10y_2y, na),
+         spread_10y_3m_lag_1 = lag(spread_10y_3m, na),
+         spread_10y_2y_lag_2 = lag(spread_10y_2y, nb),
+         spread_10y_3m_lag_2 = lag(spread_10y_3m, nb),
+         spread_10y_2y_lag_3 = lag(spread_10y_2y, nc),
+         spread_10y_3m_lag_3 = lag(spread_10y_3m, nc),
+         spread_10y_2y_lag_4 = lag(spread_10y_2y, nd),
+         spread_10y_3m_lag_4 = lag(spread_10y_3m, nd))
+
+# fedfunds
+economic_data <- economic_data %>% 
+  mutate(fedfunds_lag_1 = lag(FEDFUNDS, na),
+         fedfunds_lag_2 = lag(FEDFUNDS, nb),
+         fedfunds_lag_3 = lag(FEDFUNDS, nc),
+         fedfunds_lag_4 = lag(FEDFUNDS, nd))
+
+# real_fedfunds
+economic_data <- economic_data %>% 
+  mutate(real_fedfunds_lag_1 = lag(real_fedfunds, na),
+         real_fedfunds_lag_2 = lag(real_fedfunds, nb),
+         real_fedfunds_lag_3 = lag(real_fedfunds, nc),
+         real_fedfunds_lag_4 = lag(real_fedfunds, nd))
+
+# Print first few rows of the merged dataset with lagged spreads
+head(economic_data)
+
+```
+
+
+Model specifications without lags for spread_10y_2y
+
+```{r include = FALSE}
+
+# Probit regression
+probit_model_2y <- glm(USRECD ~ spread_10y_2y, family = binomial(link = "probit"), data = economic_data)
+summary(probit_model_2y)
+
+# Probit regression with FF
+probit_model_FF_2y <- glm(USRECD ~ spread_10y_2y + FEDFUNDS, family = binomial(link = "probit"), data = economic_data)
+summary(probit_model_FF_2y)
+
+
+# Probit regression with FF and RFF
+probit_model_RFF_2y <- glm(USRECD ~ spread_10y_2y + FEDFUNDS + real_fedfunds, family = binomial(link = "probit"), data = economic_data)
+summary(probit_model_RFF_2y)
+
+```
+
+Model specifications without lags for spread_10y_3m
+
+```{r include = FALSE}
+
+# Probit regression
+probit_model_3m <- glm(USRECD ~ spread_10y_3m, family = binomial(link = "probit"), data = economic_data)
+summary(probit_model_3m)
+
+# Probit regression with FF
+probit_model_FF_3m <- glm(USRECD ~ spread_10y_3m + FEDFUNDS, family = binomial(link = "probit"), data = economic_data)
+summary(probit_model_FF_3m)
+
+
+# Probit regression with FF and RFF
+probit_model_RFF_3m <- glm(USRECD ~ spread_10y_3m + FEDFUNDS + real_fedfunds, family = binomial(link = "probit"), data = economic_data)
+summary(probit_model_RFF_3m)
+
+```
+
+
+
+```{r}
+# Define the desired lag periods in months
+lags <- c(3, 6, 12, 24)
+
+# Create lagged variables
+for (lag in lags) {
+  economic_data <- economic_data %>%
+    mutate(!!paste0("spread_10y_2y_lag_", lag) := lag(spread_10y_2y, lag),
+           !!paste0("spread_10y_3m_lag_", lag) := lag(spread_10y_3m, lag),
+           !!paste0("fedfunds_lag_", lag) := lag(FEDFUNDS, lag),
+           !!paste0("real_fedfunds_lag_", lag) := lag(real_fedfunds, lag))
+}
+
+```
+
+In this section, we define and implement multiple lag periods for our key economic variables: the spread between the 10-year and 2-year Treasury yields (spread_10y_2y), the spread between the 10-year Treasury and the 3-month Treasury yields (spread_10y_3m), the federal funds rate (FEDFUNDS), and the real federal funds rate (real_fedfunds). Specifically, we create lagged versions of these variables at 3, 6, 12, and 24 months.
+
+The inclusion of lagged variables is critical for capturing the delayed effects that these predictors may have on economic outcomes such as recessions. For example, a steepening or flattening of the yield curve today might not influence the probability of a recession immediately but could do so several months down the line. By analyzing different lag periods, we can identify the time horizon over which these economic indicators are most predictive of future recessions.
+
+This methodological choice is grounded in the understanding that financial and economic variables often impact the economy with a lag. Businesses and consumers typically take time to respond to changes in interest rates and other economic conditions. Therefore, incorporating lagged variables allows us to more accurately model and forecast the timing of recessions based on current economic indicators.
+
+```{r}
+# List to store models
+models_2y <- list()
+
+# Iterate over lags and run models
+for (lag in lags) {
+  # Probit regression
+  model <- glm(USRECD ~ get(paste0("spread_10y_2y_lag_", lag)), family = binomial(link = "probit"), data = economic_data)
+  models_2y[[paste0("model_lag_", lag)]] <- model
+  print(summary(model))
+  
+  # Probit regression with FF
+  model_FF <- glm(USRECD ~ get(paste0("spread_10y_2y_lag_", lag)) + get(paste0("fedfunds_lag_", lag)), family = binomial(link = "probit"), data = economic_data)
+  models_2y[[paste0("model_FF_lag_", lag)]] <- model_FF
+  print(summary(model_FF))
+  
+  # Probit regression with FF and RFF
+  model_RFF <- glm(USRECD ~ get(paste0("spread_10y_2y_lag_", lag)) + get(paste0("fedfunds_lag_", lag)) + get(paste0("real_fedfunds_lag_", lag)), family = binomial(link = "probit"), data = economic_data)
+  models_2y[[paste0("model_RFF_lag_", lag)]] <- model_RFF
+  print(summary(model_RFF))
+}
+```
+
+
+```{r}
+# List to store models
+models_3m <- list()
+
+# Iterate over lags and run models
+for (lag in lags) {
+  # Probit regression
+  model <- glm(USRECD ~ get(paste0("spread_10y_3m_lag_", lag)), family = binomial(link = "probit"), data = economic_data)
+  models_3m[[paste0("model_lag_", lag)]] <- model
+  print(summary(model))
+  
+  # Probit regression with FF
+  model_FF <- glm(USRECD ~ get(paste0("spread_10y_3m_lag_", lag)) + get(paste0("fedfunds_lag_", lag)), family = binomial(link = "probit"), data = economic_data)
+  models_3m[[paste0("model_FF_lag_", lag)]] <- model_FF
+  print(summary(model_FF))
+  
+  # Probit regression with FF and RFF
+  model_RFF <- glm(USRECD ~ get(paste0("spread_10y_3m_lag_", lag)) + get(paste0("fedfunds_lag_", lag)) + get(paste0("real_fedfunds_lag_", lag)), family = binomial(link = "probit"), data = economic_data)
+  models_3m[[paste0("model_RFF_lag_", lag)]] <- model_RFF
+  print(summary(model_RFF))
+}
+```
+
+Out-of-sample validation 
+
+```{r}
+library(pROC)
+
+# Function to evaluate model performance (e.g., AUC-ROC)
+evaluate_model <- function(model_formula, train_data, test_data) {
+  # Train the model
+  fit <- glm(model_formula, family = binomial(link = "probit"), data = train_data)
+  
+  # Predict probabilities on test data
+  prob_pred <- predict(fit, newdata = test_data, type = "response")
+  
+  # Calculate AUC-ROC
+  roc_obj <- roc(test_data$USRECD, prob_pred)
+  return(auc(roc_obj))
+}
+
+# Initialize list to store AUC results
+auc_results <- list()
+
+# Perform train-test split validation for each period
+for (i in seq_along(train_test_periods)) {
+  # Extract dates for current period
+  train_start <- train_test_periods[[i]]$train_start
+  train_end <- train_test_periods[[i]]$train_end
+  test_start <- train_test_periods[[i]]$test_start
+  test_end <- train_test_periods[[i]]$test_end
+  
+  # Subset data for current period
+  train_data <- economic_data[economic_data$date >= train_start & economic_data$date <= train_end, ]
+  test_data <- economic_data[economic_data$date >= test_start & economic_data$date <= test_end, ]
+  
+  # Evaluate models for spread_10y_2y
+  for (lag in lags) {
+    # Construct formulas with proper concatenation and spacing
+    formula_2y <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag, sep = ""))
+    formula_2y_FF <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag, " + fedfunds_lag_", lag, sep = ""))
+    formula_2y_RFF <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag, " + fedfunds_lag_", lag, " + real_fedfunds_lag_", lag, sep = ""))
+    
+    # Evaluate models and store results
+    auc_results[[paste0("2y_lag_", lag, "_period_", i)]] <- evaluate_model(formula_2y, train_data, test_data)
+    auc_results[[paste0("2y_FF_lag_", lag, "_period_", i)]] <- evaluate_model(formula_2y_FF, train_data, test_data)
+    auc_results[[paste0("2y_RFF_lag_", lag, "_period_", i)]] <- evaluate_model(formula_2y_RFF, train_data, test_data)
+  }
+  
+  # Evaluate models for spread_10y_3m
+  for (lag in lags) {
+    # Construct formulas for spread_10y_3m with proper concatenation and spacing
+    formula_3m <- as.formula(paste("USRECD ~ spread_10y_3m_lag_", lag, sep = ""))
+    formula_3m_FF <- as.formula(paste("USRECD ~ spread_10y_3m_lag_", lag, " + fedfunds_lag_", lag, sep = ""))
+    formula_3m_RFF <- as.formula(paste("USRECD ~ spread_10y_3m_lag_", lag, " + fedfunds_lag_", lag, " + real_fedfunds_lag_", lag, sep = ""))
+    
+    # Evaluate models and store results
+    auc_results[[paste0("3m_lag_", lag, "_period_", i)]] <- evaluate_model(formula_3m, train_data, test_data)
+    auc_results[[paste0("3m_FF_lag_", lag, "_period_", i)]] <- evaluate_model(formula_3m_FF, train_data, test_data)
+    auc_results[[paste0("3m_RFF_lag_", lag, "_period_", i)]] <- evaluate_model(formula_3m_RFF, train_data, test_data)
+  }
+}
+
+# Print out the AUC results
+print("AUC Results:")
+print(auc_results)
+
+
+
+```
+
+The results from the logistic regression models with different predictors and lags indicate varying performance in predicting US recessions (USRECD). Here's a concise interpretation and conclusion:
+1
+    Model Performance: Across different periods and predictors (spread_10y_2y, FEDFUNDS, real_fedfunds), the Area Under the Curve (AUC) values vary significantly.
+
+    Predictor Importance: For spread_10y_2y (a common recession predictor), the models generally show reasonable predictive power, with AUC values ranging from 0.4269 to 0.9975. Models that include interactions with FEDFUNDS and real_fedfunds tend to perform better in some cases but not consistently across all lags and periods.
+
+    Interaction Effects: The interaction terms (e.g., FEDFUNDS
+    ) are statistically significant, as indicated by their coefficients and the results of the Breusch-Pagan test (BP = 35.253, df = 4, p-value = 4.121e-07). This suggests that the relationship between predictors and the likelihood of recession is influenced by their combined effects rather than individual effects alone.
+
+    Conclusion: The models generally perform better when including interaction terms, indicating that the relationship between predictors and the occurrence of recessions is complex and may involve synergistic effects. However, the predictive power varies depending on the specific predictors and lag periods considered. Further refinement and possibly additional predictors could potentially enhance model performance.
+
+In summary, while the models show promise in predicting recessions using economic indicators, particularly spread_10y_2y and its interactions with other variables, there's room for further exploration to improve robustness and generalizability across different economic periods.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+McFadden's R-squared (Pseudo R-squared)
+
+McFadden's R-squared is a measure of the goodness-of-fit for logistic regression models. It's a pseudo R-squared value and can be interpreted similarly to traditional R-squared in linear regression.
+
+```{r}
+
+# Assuming probit_model_2y is the fitted glm object for spread_10y_2y
+mcfadden_2y <- pR2(probit_model_2y)
+mcfadden_2y
+
+```
+
+
+```{r}
+# List to store McFadden's R-squared values
+mcfadden_r2_2y <- list()
+
+# Define lags
+lags <- c("na", "nb", "nc", "nd")
+
+# Iterate over lags and calculate McFadden's R-squared
+for (lag in lags) {
+  # Construct model formula
+  formula <- as.formula(paste("USRECD ~ spread_10y_2y_", lag, sep = ""))
+  
+  # Fit the model (replace with actual data and family if needed)
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2_2y[[lag]] <- pR2(model)
+}
+
+# Print McFadden's R-squared values for 10-year minus 2-year models
+mcfadden_r2_2y
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NEEEXXXTTTTT
+
+
+
+
+
+
+```{r}
+# install.packages("pscl")  # Install the pscl package if not already installed
+library(pscl)  # Load the pscl package for McFadden's R-squared
+
+# Calculate McFadden's R-squared for spread_10y_2y model
+mcfadden_2y <- pR2(probit_model_2y)
+mcfadden_2y
+
+# List to store McFadden's R-squared values
+mcfadden_r2 <- list()
+
+# Iterate over models and lags
+for (lag in lags) {
+  # Construct model formula
+  formula <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag, sep = ""))
+  
+  # Fit the model
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2[[paste0("model_lag_", lag)]] <- pR2(model)
+}
+
+# Print McFadden's R-squared values
+mcfadden_r2
+
+```
+Your approach to calculating and interpreting McFadden's R-squared appears correct. You've effectively used the pscl package to assess the goodness-of-fit of your logistic regression models across different lags of spread_10y_2y. The increasing trend in McFadden's R-squared suggests that including more lags improves the model's ability to predict recessions using the yield curve spread.
+
+```{r}
+
+# Load the pscl package for McFadden's R-squared
+library(pscl)
+
+# Calculate McFadden's R-squared for the initial model without lags (spread_10y_3m)
+mcfadden_3m <- pR2(probit_model_3m)
+mcfadden_3m
+
+# List to store McFadden's R-squared values for different lags
+mcfadden_r2_3m <- list()
+
+# Iterate over lags
+for (lag in lags) {
+  # Construct model formula
+  formula <- as.formula(paste("USRECD ~ spread_10y_3m_lag_", lag, sep = ""))
+  
+  # Fit the model
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2_3m[[paste0("model_lag_", lag)]] <- pR2(model)
+}
+
+# Print McFadden's R-squared values for different lags
+mcfadden_r2_3m
+
+
+```
+
+model2 fedfunds 2 year
+
+```{r}
+# Load required packages
+library(pscl)  # for pR2 function
+
+# Calculate McFadden's R-squared for spread_10y_2y model
+mcfadden_2y <- pR2(probit_model_2y)
+mcfadden_2y
+
+# List to store McFadden's R-squared values for different lags
+mcfadden_r2 <- list()
+
+# Iterate over lags
+for (lag in lags) {
+  # Construct model formula
+  formula <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag, "+ fedfunds_lag_", lag, sep = ""))
+  
+  # Fit the model
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2[[paste0("model_lag_", lag)]] <- pR2(model)
+}
+
+# Print McFadden's R-squared values for different lags
+mcfadden_r2
+```
+
+model2 fedfunds 3 month 
+
+```{r}
+
+# Load required packages
+library(pscl)  # for pR2 function
+
+# Calculate McFadden's R-squared for spread_10y_3m model
+mcfadden_3m <- pR2(probit_model_3m)
+mcfadden_3m
+
+# List to store McFadden's R-squared values for different lags
+mcfadden_r2_3m <- list()
+
+# Iterate over lags
+for (lag in lags) {
+  # Construct model formula
+  formula <- as.formula(paste("USRECD ~ spread_10y_3m_lag_", lag, "+ fedfunds_lag_", lag, sep = ""))
+  
+  # Fit the model
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2_3m[[paste0("model_lag_", lag)]] <- pR2(model)
+}
+
+# Print McFadden's R-squared values for different lags
+mcfadden_r2_3m
+
+
+```
+
+
+model3 FF and RFF 2 year 
+
+```{r}
+# Define lags
+lags <- 1:4
+
+# List to store McFadden's R-squared values
+mcfadden_r2_combined <- list()
+
+# Iterate over lags and run models
+for (lag in lags) {
+  # Construct model formula with spread_10y_2y, FEDFUNDS, and real_fedfunds
+  formula <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag, " + fedfunds_lag_", lag, " + real_fedfunds_lag_", lag, sep = ""))
+  
+  # Fit the model
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2_combined[[paste0("model_lag_", lag)]] <- pR2(model)
+  
+  # Print McFadden's R-squared for the current model
+  print(paste("McFadden's R-squared for lag", lag, ":", mcfadden_r2_combined[[paste0("model_lag_", lag)]]))
+}
+
+# Print all McFadden's R-squared values
+mcfadden_r2_combined
+```
+
+model3 FF and RFF 3 month  
+
+```{r} 
+# Define lags
+lags <- 1:4
+
+# List to store McFadden's R-squared values
+mcfadden_r2_combined_3m <- list()
+
+# Iterate over lags and run models
+for (lag in lags) {
+  # Construct model formula with spread_10y_3m, FEDFUNDS, and real_fedfunds
+  formula <- as.formula(paste("USRECD ~ spread_10y_3m_lag_", lag, " + fedfunds_lag_", lag, " + real_fedfunds_lag_", lag, sep = ""))
+  
+  # Fit the model
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  
+  # Calculate McFadden's R-squared
+  mcfadden_r2_combined_3m[[paste0("model_lag_", lag)]] <- pR2(model)
+  
+  # Print McFadden's R-squared for the current model
+  print(paste("McFadden's R-squared for lag", lag, ":", mcfadden_r2_combined_3m[[paste0("model_lag_", lag)]]))
+}
+
+# Print all McFadden's R-squared values
+mcfadden_r2_combined_3m
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

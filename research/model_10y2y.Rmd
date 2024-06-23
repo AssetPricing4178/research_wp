@@ -1,0 +1,170 @@
+---
+title: "Does the Yield Curve Predict Recessions?"
+author: "Jonathan Ramani Krishnamachari"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Load necessary libraries
+library(fredr)      # For accessing FRED data
+library(dplyr)      # For data manipulation
+library(ggplot2)    # For plotting
+library(tidyverse)  # For data manipulation and ggplot2 compatibility
+library(pscl)       # For McFadden's R-squared
+library(pROC)       # For ROC analysis
+
+# Set FRED API key
+fredr_set_key("dfdf7dff8e1f85865d60e113b4f67426")
+
+# Define observation start and end dates
+start_date <- as.Date("1976-06-01")
+end_date <- as.Date("2024-04-01")
+
+# Retrieve data from FRED
+gs10 <- fredr(series_id = "GS10", 
+              observation_start = start_date, 
+              observation_end = end_date,
+              frequency = "m") %>%
+  select(date, GS10 = value)
+
+gs2 <- fredr(series_id = "GS2", 
+             observation_start = start_date, 
+             observation_end = end_date,
+             frequency = "m") %>%
+  select(date, GS2 = value)
+
+tb3ms <- fredr(series_id = "TB3MS", 
+               observation_start = start_date, 
+               observation_end = end_date,
+               frequency = "m") %>%
+  select(date, TB3MS = value)
+
+t10y2y <- fredr(series_id = "T10Y2Y", 
+                observation_start = start_date, 
+                observation_end = end_date,
+                frequency = "m") %>%
+  select(date, T10Y2Y = value)
+
+recession <- fredr(series_id = "USRECD", 
+                   observation_start = start_date, 
+                   observation_end = end_date) %>%
+  select(date, USRECD = value)
+
+fedfunds <- fredr(series_id = "FEDFUNDS", 
+                  observation_start = start_date, 
+                  observation_end = end_date) %>%
+  select(date, FEDFUNDS = value)
+
+cpi <- fredr(series_id = "CPIAUCSL", 
+             observation_start = start_date, 
+             observation_end = end_date) %>%
+  select(date, CPIAUCSL = value)
+
+# Merge datasets
+economic_data <- gs10 %>%
+  left_join(gs2, by = "date") %>%
+  left_join(tb3ms, by = "date") %>%
+  left_join(t10y2y, by = "date") %>%
+  left_join(recession, by = "date") %>%
+  left_join(fedfunds, by = "date") %>%
+  left_join(cpi, by = "date")
+
+# Calculate the real federal funds rate
+economic_data <- economic_data %>%
+  mutate(inflation = (CPIAUCSL / lag(CPIAUCSL, 12)) - 1,
+         real_fedfunds = FEDFUNDS - (inflation * 100))
+
+# Remove NA values
+economic_data <- na.omit(economic_data)
+
+# Calculate spreads and add to economic_data
+economic_data <- economic_data %>%
+  mutate(spread_10y_2y = GS10 - GS2,
+         spread_10y_3m = GS10 - TB3MS)
+
+# Print first few rows of the merged dataset
+head(economic_data)
+
+```
+
+```{r}
+# Plotting T10Y2Y
+economic_data %>%
+  ggplot(aes(x = date, y = T10Y2Y)) +
+  geom_line(color = "blue") +
+  labs(title = "10-Year minus 2-Year Bond Spread (T10Y2Y)",
+       y = "Spread",
+       x = "Date") +
+  theme_minimal()
+```
+
+
+```{r}
+# Lagged variables function
+create_lagged_vars <- function(data, var_name, lags) {
+  for (lag in lags) {
+    data <- data %>%
+      mutate(!!paste0(var_name, "_lag_", lag) := lag(!!sym(var_name), lag))
+  }
+  return(data)
+}
+
+# Add lags to T10Y2Y and real_fedfunds in economic_data
+lags <- c(3, 6, 12, 24)
+economic_data <- create_lagged_vars(economic_data, "T10Y2Y", lags)
+economic_data <- create_lagged_vars(economic_data, "real_fedfunds", lags)
+
+```
+
+```{r}
+# Function to evaluate model performance (e.g., AUC-ROC)
+evaluate_model <- function(model_formula, train_data, test_data) {
+  # Train the model
+  fit <- glm(model_formula, family = binomial(link = "probit"), data = train_data)
+  
+  # Predict probabilities on test data
+  prob_pred <- predict(fit, newdata = test_data, type = "response")
+  
+  # Calculate AUC-ROC
+  roc_obj <- roc(test_data$USRECD, prob_pred)
+  return(auc(roc_obj))
+}
+
+# List to store models
+models <- list()
+
+# Perform train-test split validation for each period
+for (lag in lags) {
+  # Model 1: Baseline model with T10Y2Y only
+  formula1 <- as.formula(paste("USRECD ~ T10Y2Y_lag_", lag, sep = ""))
+  train_data <- economic_data[economic_data$date < as.Date("2020-01-01"), ]
+  test_data <- economic_data[economic_data$date >= as.Date("2020-01-01"), ]
+  model1 <- glm(formula1, family = binomial(link = "probit"), data = train_data)
+  models[[paste0("model_lag_", lag, "_T10Y2Y")]] <- model1
+  auc1 <- evaluate_model(formula1, train_data, test_data)
+  print(paste("AUC-ROC for Model 1 (T10Y2Y lag", lag, "):", auc1))
+  
+  # Model 2: Including real federal funds rate
+  # Ensure real_fedfunds_lag_3 is present in train_data
+  if (paste0("real_fedfunds_lag_", lag) %in% colnames(train_data)) {
+    formula2 <- as.formula(paste("USRECD ~ T10Y2Y_lag_", lag, " + real_fedfunds_lag_", lag, sep = ""))
+    model2 <- glm(formula2, family = binomial(link = "probit"), data = train_data)
+    models[[paste0("model_lag_", lag, "_T10Y2Y_real_fedfunds")]] <- model2
+    auc2 <- evaluate_model(formula2, train_data, test_data)
+    print(paste("AUC-ROC for Model 2 (T10Y2Y + real fedfunds lag", lag, "):", auc2))
+  } else {
+    print(paste("Model 2 (T10Y2Y + real fedfunds lag", lag, ") skipped: real_fedfunds_lag_", lag, " not found in train_data"))
+  }
+}
+
+```
+
+```{r}
+
+# Calculate McFadden's R-squared for each model
+mcfadden_r2 <- lapply(models, pR2)
+print("McFadden's R-squared:")
+print(mcfadden_r2)
+
+```

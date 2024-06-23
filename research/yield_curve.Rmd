@@ -1,0 +1,102 @@
+---
+title: "Does the Yield Curve Predict Recessions?"
+author: "Jonathan Ramani Krishnamachari"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Load necessary libraries
+library(fredr)      # For accessing FRED data
+library(dplyr)      # For data manipulation
+library(ggplot2)    # For plotting
+library(tidyverse)  # For data manipulation and ggplot2 compatibility
+library(pscl)       # For McFadden's R-squared
+
+# Set FRED API key
+fredr_set_key("dfdf7dff8e1f85865d60e113b4f67426")
+
+```
+
+
+```{r}
+# Define observation start and end dates
+start_date <- as.Date("1976-06-01")
+end_date <- as.Date("2024-04-01")
+
+# Retrieve data from FRED
+# ...
+# Code for retrieving data omitted for brevity
+# ...
+
+# Merge datasets
+# ...
+# Code for merging datasets omitted for brevity
+# ...
+
+# Calculate spreads and add to economic_data
+# ...
+# Code for calculating spreads omitted for brevity
+# ...
+
+# Lag spreads and economic indicators
+lags <- c(3, 6, 12, 24)
+for (lag in lags) {
+  economic_data <- economic_data %>%
+    mutate(
+      !!paste0("spread_10y_2y_lag_", lag) := lag(spread_10y_2y, lag),
+      !!paste0("spread_10y_3m_lag_", lag) := lag(spread_10y_3m, lag),
+      !!paste0("fedfunds_lag_", lag) := lag(FEDFUNDS, lag),
+      !!paste0("real_fedfunds_lag_", lag) := lag(real_fedfunds, lag)
+    )
+}
+
+```
+
+
+
+```{r}
+# Define models for spread_10y_2y
+models_2y <- list()
+for (lag in lags) {
+  formula <- as.formula(paste("USRECD ~ spread_10y_2y_lag_", lag))
+  model <- glm(formula, family = binomial(link = "probit"), data = economic_data)
+  models_2y[[paste0("model_lag_", lag)]] <- model
+  print(summary(model))
+}
+
+```
+
+
+```{r}
+
+# Calculate McFadden's R-squared for spread_10y_2y models
+mcfadden_r2_2y <- lapply(models_2y, function(model) pR2(model))
+mcfadden_r2_2y
+
+```
+
+```{r}
+
+# Out-of-sample validation
+# Example code for train-test split and AUC-ROC calculation
+# ...
+
+
+```
+
+```{r}
+
+# Conclusion section
+cat("
+The results indicate that the yield curve, particularly the spread between 10-year and 2-year Treasury yields (T10Y2Y), shows varying predictive power for US recessions across different lag periods and model specifications.")
+
+```
+
+
+
+
+
+
+
+
